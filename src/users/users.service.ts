@@ -17,7 +17,7 @@ export class UsersService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(createUserDto: CreateUserDto):  Promise<{ message: string; accessToken: string; user: UserResponse }> {
+ async register(createUserDto: CreateUserDto):  Promise<{ message: string; accessToken: string; user: UserResponse }> {
     const { firstName, lastName, email, password, role } = createUserDto;
 
     if (!firstName || !lastName || !email || !password) {
@@ -98,7 +98,7 @@ export class UsersService {
 
 
 async getAllUsers(): Promise<UserResponse[]> {
-  const users = await this.userRepository.find({
+  const users = await this.userRepository.find({ where: {isDeleted: false},
     order: { id: 'ASC'  },  
   });
 
@@ -116,8 +116,8 @@ async getAllUsers(): Promise<UserResponse[]> {
       throw new ForbiddenException('Not authorized');
     }
 
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
+    const user = await this.userRepository.findOne({ where: { id }, select: ['id', 'firstName', 'lastName', 'email', 'role', 'isDeleted'], })
+    if (!user  || user.isDeleted) throw new NotFoundException('User not found');
 
     return user;
   }
@@ -128,25 +128,47 @@ async getAllUsers(): Promise<UserResponse[]> {
     }
 
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user || user.isDeleted) throw new NotFoundException('User not found');
 
     await this.userRepository.update(id, updateData);
 
     return { message: 'User Updated successfully' };
   }
 
-  async deleteUserById(requestUser: any, id: number) {
-    if (requestUser.id !== id && requestUser.role !== 'admin') {
-      throw new ForbiddenException('Unauthorized');
-    }
 
-    const result = await this.userRepository.delete(id);
-
-    if (result.affected === 0) {
-      throw new NotFoundException('User not found');
-    }
-
-    return { message: 'User deleted successfully' };
+async softDeleteUserById(requestUser: any, id: number) {
+  if (requestUser.id !== id && requestUser.role !== 'admin') {
+    throw new ForbiddenException('Unauthorized');
   }
-  
+
+  const user = await this.userRepository.findOne({ where: { id } });
+
+  if (!user || user.isDeleted) {
+    throw new NotFoundException('User not found');
+  }
+
+  user.isDeleted = true;
+  await this.userRepository.save(user);
+
+  return { message: 'User soft-deleted successfully' };
+}
+
+
+
+  async deleteUserById(requestUser: any, id: number) {
+  if (requestUser.id !== id && requestUser.role !== 'admin') {
+    throw new ForbiddenException('Unauthorized');
+  }
+
+  const user = await this.userRepository.findOne({ where: { id } });
+
+  if (!user || user.isDeleted) {
+    throw new NotFoundException('User not found');
+  }
+
+  user.isDeleted = true;
+  await this.userRepository.save(user);
+
+  return { message: 'User soft-deleted successfully' };
+}
 }
