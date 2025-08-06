@@ -24,4 +24,9 @@ export class User {
 
     @OneToMany(() => Blog, (blog) => blog.author)
   blogs: Blog[];
+
+  @Column({ default: false })
+isDeleted: boolean;
+  static isDeleted: boolean;
+
 }
