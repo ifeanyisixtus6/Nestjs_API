@@ -9,8 +9,22 @@ describe('BlogService', () => {
   let service: BlogService;
   let blogRepository: any;
 
-  const mockUser = { id: 1, role: UserRole.User, firstName: 'Attah', lastName: 'Ifeanyichukwu', email: 'ify@yopmail.com', password: 'sixtus1237', blogs: [] };
-  const mockAdmin = { id: 2, role: UserRole.Admin };
+  const mockUser = { 
+    id: 1, 
+    role: UserRole.User, 
+    firstName: 'Attah', 
+    lastName: 'Ifeanyichukwu', 
+    email: 'ify@yopmail.com', 
+    password: 'sixtus1237', 
+    blogs: [],
+    isDeleted: false 
+  };
+  
+  const mockAdmin = { 
+    id: 2, 
+    role: UserRole.Admin,
+    isDeleted: false 
+  };
 
   beforeEach(async () => {
     blogRepository = {
